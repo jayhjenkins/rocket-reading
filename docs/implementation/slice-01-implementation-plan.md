@@ -169,14 +169,16 @@ describe('Data Models', () => {
       item_id: 'letter_m',
       profile_id: 'child_1',
       last_seen: now,
-      next_due: new Date(now.getTime() + 24 * 60 * 60 * 1000),
-      interval_days: 1,
+      next_due: now,  // Due immediately for new items
+      interval_days: 0,  // Not yet graduated from massed practice
       correct_streak: 0,
       error_count: 0,
-      status: 'new'
+      status: 'new',
+      learning_threshold_met: false  // New field: hasn't graduated yet
     }
     expect(itemState.status).toBe('new')
-    expect(itemState.interval_days).toBe(1)
+    expect(itemState.interval_days).toBe(0)
+    expect(itemState.learning_threshold_met).toBe(false)
   })
 
   it('should create a valid ResponseData', () => {
@@ -258,6 +260,7 @@ export interface ItemState {
   correct_streak: number
   error_count: number
   status: ItemStatus
+  learning_threshold_met: boolean  // Has item graduated from massed practice?
 }
 
 export interface ResponseData {
@@ -380,10 +383,10 @@ describe('SR Engine', () => {
   })
 
   describe('logReview', () => {
-    it('should update interval on correct rating', async () => {
+    it('should keep item in massed practice until 3 correct in a row', async () => {
       await engine.seedItems(testProfile, testItems)
 
-      // First correct → 1 day
+      // First correct → still in massed practice (interval = 0)
       await engine.logReview(testProfile, 'letter_m', 'correct', {
         raw_response: 'test',
         response_time_ms: 1000,
@@ -391,14 +394,11 @@ describe('SR Engine', () => {
       })
 
       let state = await engine.getItemState(testProfile, 'letter_m')
-      expect(state.interval_days).toBe(1)
+      expect(state.interval_days).toBe(0)  // Show again in same session
       expect(state.correct_streak).toBe(1)
+      expect(state.learning_threshold_met).toBe(false)
 
-      // Move next_due to today
-      state.next_due = new Date()
-      await engine.updateItemState(testProfile, state)
-
-      // Second correct → 3 days
+      // Second correct → still in massed practice
       await engine.logReview(testProfile, 'letter_m', 'correct', {
         raw_response: 'test',
         response_time_ms: 1000,
@@ -406,49 +406,106 @@ describe('SR Engine', () => {
       })
 
       state = await engine.getItemState(testProfile, 'letter_m')
-      expect(state.interval_days).toBe(3)
-    })
+      expect(state.interval_days).toBe(0)  // Show again in same session
+      expect(state.correct_streak).toBe(2)
+      expect(state.learning_threshold_met).toBe(false)
 
-    it('should reset to 1 day on incorrect rating', async () => {
-      await engine.seedItems(testProfile, testItems)
-
-      // First correct → 1 day
+      // Third correct → GRADUATED to spacing!
       await engine.logReview(testProfile, 'letter_m', 'correct', {
         raw_response: 'test',
         response_time_ms: 1000,
         hints_used: 0
       })
 
-      // Reset next_due
+      state = await engine.getItemState(testProfile, 'letter_m')
+      expect(state.interval_days).toBe(1)  // Now 1-day interval
+      expect(state.correct_streak).toBe(3)
+      expect(state.learning_threshold_met).toBe(true)
+      expect(state.status).toBe('maturing')
+    })
+
+    it('should double interval after graduation', async () => {
+      await engine.seedItems(testProfile, testItems)
+
+      // Graduate item (3 correct in a row)
+      for (let i = 0; i < 3; i++) {
+        await engine.logReview(testProfile, 'letter_m', 'correct', {
+          raw_response: 'test',
+          response_time_ms: 1000,
+          hints_used: 0
+        })
+      }
+
       let state = await engine.getItemState(testProfile, 'letter_m')
+      expect(state.interval_days).toBe(1)
+      expect(state.learning_threshold_met).toBe(true)
+
+      // Move next_due to today
       state.next_due = new Date()
       await engine.updateItemState(testProfile, state)
 
-      // Incorrect → reset to 1 day, status = learning
+      // Fourth correct → double to 2 days
+      await engine.logReview(testProfile, 'letter_m', 'correct', {
+        raw_response: 'test',
+        response_time_ms: 1000,
+        hints_used: 0
+      })
+
+      state = await engine.getItemState(testProfile, 'letter_m')
+      expect(state.interval_days).toBe(2)  // 1 * 2 = 2
+    })
+
+    it('should reset to massed practice on incorrect rating', async () => {
+      await engine.seedItems(testProfile, testItems)
+
+      // Graduate item
+      for (let i = 0; i < 3; i++) {
+        await engine.logReview(testProfile, 'letter_m', 'correct', {
+          raw_response: 'test',
+          response_time_ms: 1000,
+          hints_used: 0
+        })
+      }
+
+      // Incorrect → reset to massed practice
       await engine.logReview(testProfile, 'letter_m', 'incorrect', {
         raw_response: 'test',
         response_time_ms: 1000,
         hints_used: 0
       })
 
-      state = await engine.getItemState(testProfile, 'letter_m')
-      expect(state.interval_days).toBe(1)
+      const state = await engine.getItemState(testProfile, 'letter_m')
+      expect(state.interval_days).toBe(0)  // Back to massed practice
+      expect(state.correct_streak).toBe(0)
+      expect(state.learning_threshold_met).toBe(false)  // Reset flag
       expect(state.status).toBe('learning')
       expect(state.error_count).toBe(1)
     })
 
-    it('should handle needed_help rating', async () => {
+    it('should handle needed_help rating during massed practice', async () => {
       await engine.seedItems(testProfile, testItems)
 
+      // First correct
+      await engine.logReview(testProfile, 'letter_m', 'correct', {
+        raw_response: 'test',
+        response_time_ms: 1000,
+        hints_used: 0
+      })
+
+      let state = await engine.getItemState(testProfile, 'letter_m')
+      expect(state.correct_streak).toBe(1)
+
+      // Needed help → reduce streak, keep in massed practice
       await engine.logReview(testProfile, 'letter_m', 'needed_help', {
         raw_response: 'test',
         response_time_ms: 1000,
         hints_used: 1
       })
 
-      const state = await engine.getItemState(testProfile, 'letter_m')
-      expect(state.interval_days).toBe(1) // 0.5 rounded up
-      expect(state.correct_streak).toBe(0)
+      state = await engine.getItemState(testProfile, 'letter_m')
+      expect(state.interval_days).toBe(0)  // Still in massed practice
+      expect(state.correct_streak).toBe(0)  // Streak reduced
+      expect(state.learning_threshold_met).toBe(false)
     })
 
     it('should save response data with review', async () => {
@@ -542,10 +599,11 @@ export class SREngine {
         profile_id: profileId,
         last_seen: new Date(),
         next_due: new Date(), // Due immediately
-        interval_days: 1,
+        interval_days: 0,  // Start in massed practice
         correct_streak: 0,
         error_count: 0,
-        status: 'new'
+        status: 'new',
+        learning_threshold_met: false  // Not yet graduated
       }
       tx.objectStore('item_states').put(itemState)
     })
@@ -594,41 +652,70 @@ export class SREngine {
     const state = await this.getItemState(profileId, itemId)
     const now = new Date()
 
-    // Update intervals based on rating
+    // Massed + Spaced Hybrid Algorithm
+    const LEARNING_THRESHOLD = 3  // Need 3 correct in a row to graduate
+
     let newInterval = state.interval_days
     let newStreak = state.correct_streak
     let newErrors = state.error_count
     let newStatus = state.status
+    let newLearningThresholdMet = state.learning_threshold_met
 
     if (rating === 'correct') {
-      if (state.correct_streak === 0) {
-        newInterval = 1 // First correct
-      } else if (state.correct_streak === 1) {
-        newInterval = 3 // Second correct
-      } else {
-        newInterval = Math.min(state.interval_days * 2, 30) // Double, cap at 30 days
-      }
       newStreak = state.correct_streak + 1
-      newStatus = 'maturing'
+
+      if (!state.learning_threshold_met) {
+        // MASSED PRACTICE PHASE
+        if (newStreak >= LEARNING_THRESHOLD) {
+          // GRADUATED to spacing!
+          newInterval = 1  // Start with 1-day interval
+          newLearningThresholdMet = true
+          newStatus = 'maturing'
+        } else {
+          // Still in massed practice
+          newInterval = 0  // Show again in same session
+          newStatus = 'learning'
+        }
+      } else {
+        // SPACED PRACTICE PHASE (already graduated)
+        newInterval = Math.min(state.interval_days * 2, 30)  // Double, cap at 30 days
+        newStatus = 'maturing'
+      }
     } else if (rating === 'incorrect') {
-      newInterval = 1
+      // Reset to massed practice
+      newInterval = 0  // Show again in same session
       newStreak = 0
       newErrors = state.error_count + 1
+      newLearningThresholdMet = false  // Reset graduation flag
       newStatus = 'learning'
     } else if (rating === 'needed_help') {
-      newInterval = Math.max(Math.ceil(state.interval_days * 0.5), 1)
-      newStreak = 0
+      // Reduce streak, keep in current phase
+      if (!state.learning_threshold_met) {
+        // In massed practice: reduce streak, stay in session
+        newInterval = 0
+        newStreak = Math.max(0, state.correct_streak - 1)
+      } else {
+        // In spaced practice: reduce interval
+        newInterval = Math.max(Math.ceil(state.interval_days * 0.5), 1)
+        newStreak = 0
+      }
     }
+
+    // Calculate next_due date
+    const nextDue = newInterval === 0
+      ? now  // Due immediately (show again in same session)
+      : new Date(now.getTime() + newInterval * 24 * 60 * 60 * 1000)
 
     // Update item state
     const updatedState: ItemState = {
       ...state,
       last_seen: now,
-      next_due: new Date(now.getTime() + newInterval * 24 * 60 * 60 * 1000),
+      next_due: nextDue,
       interval_days: newInterval,
       correct_streak: newStreak,
       error_count: newErrors,
-      status: newStatus
+      status: newStatus,
+      learning_threshold_met: newLearningThresholdMet
     }
 
     await this.updateItemState(profileId, updatedState)

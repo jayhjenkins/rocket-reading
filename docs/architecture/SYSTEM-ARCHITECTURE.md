@@ -238,18 +238,50 @@ interface ItemState {
   last_seen: Date
   next_due: Date
   interval_days: number
-  ease_factor: number         // Anki-style ease
+  ease_factor?: number        // Optional: Anki-style ease (Phase 2+)
   correct_streak: number
   error_count: number
   status: "new" | "learning" | "maturing" | "mastered" | "maintenance"
+  learning_threshold_met: boolean  // Has item graduated from massed practice?
 }
 ```
 
-**Algorithm:**
-- Start with simplified Anki-style algorithm
-- New item: 1 day → 3 days → graduated
-- Mature item: interval *= 2–3 on success, reset on failure
-- Details to be refined during Slice 1 implementation
+**Algorithm: Massed + Spaced Hybrid**
+
+Combines massed practice (early learning) with spaced practice (long-term retention). Optimized for ages 2.5–5.
+
+**Phase 1: Massed Practice (Learning)**
+- New items need **3 correct in a row** before graduating to spaced intervals
+- During learning: `interval = 0` (show again in same session)
+- Items mixed within session to avoid boredom (not "m, m, m" but "m, a, t, m, a, s, m...")
+- ❌ or 😬 → reset or reduce streak, show again same session
+
+**Phase 2: Spaced Practice (Retention)**
+- After 3 consecutive ✅ → `interval = 1 day` (graduated!)
+- Subsequent ✅ → `interval *= 2` (max 30 days)
+- ❌ → `interval = 1 day`, reset to learning
+- 😬 → `interval *= 0.5` (min 1 day)
+
+**Example Progression:**
+```
+Day 1, Session 1:
+  Show /m/ → ✅ (streak=1, interval=0) → show again same session
+  Show /m/ → ✅ (streak=2, interval=0) → show again same session
+  Show /m/ → ✅ (streak=3, interval=1) → GRADUATED! Move to spacing
+
+Day 2: Show /m/ → ✅ (interval=3 days)
+Day 5: Show /m/ → ✅ (interval=6 days)
+Day 11: Show /m/ → ✅ (interval=12 days)
+Day 23: Show /m/ → ✅ (interval=24 days)
+Day 47: Show /m/ → ✅ (interval=30 days, capped)
+```
+
+**Rationale:**
+- Ages 2-5 need multiple exposures before encoding (massed practice)
+- Spacing too early leads to forgetting before consolidation
+- 3-correct threshold balances confidence-building with efficiency
+- 30-day cap prevents items from being buried too long at this age
+- Simpler than full SM-2 (easier to debug, validate with real kids)
 
 **Storage:**
 - Local-first (offline capable)

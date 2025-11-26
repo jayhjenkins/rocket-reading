@@ -152,20 +152,28 @@
 - [ ] Responsive design (adapts to different screen sizes)
 - [ ] **Note:** This is NOT a native iPad app yet; it's a web app. Native iPad app comes in Phase 2.
 
-### TR2: SR Engine (Minimal)
+### TR2: SR Engine (Massed + Spaced Hybrid)
 - [ ] Item model: `{ id, type, content, world, metadata }`
-- [ ] ItemState model: `{ item_id, profile_id, last_seen, next_due, interval_days, correct_streak, error_count, status }`
+- [ ] ItemState model: `{ item_id, profile_id, last_seen, next_due, interval_days, correct_streak, error_count, status, learning_threshold_met }`
 - [ ] Review model: `{ id, profile_id, item_id, timestamp, rating, response_data, mode }`
-- [ ] `getDueItems(profileId, date)` function returns items where `next_due <= date`
+- [ ] `getDueItems(profileId, date)` function returns items where `next_due <= date` OR `interval_days = 0` (due in same session)
 - [ ] `logReview(profileId, itemId, rating, responseData)` function updates ItemState
-- [ ] Simple interval algorithm:
-  - New item, first ✅ → interval = 1 day
-  - New item, second ✅ → interval = 3 days
-  - Mature item, ✅ → interval *= 2 (max 30 days for Phase 1)
-  - Any ❌ → interval = 1 day, status = "learning"
-  - 😬 → interval *= 0.5 (min 1 day)
+- [ ] **Massed + Spaced Hybrid Algorithm** (optimized for ages 2.5–5):
+  - **Learning Phase (Massed Practice):**
+    - New item needs **3 consecutive ✅** to graduate
+    - During learning: `interval = 0` (show again in same session)
+    - Items mixed within session to avoid boredom
+    - ❌ → `interval = 0`, `correct_streak = 0` (show again)
+    - 😬 → `interval = 0`, `correct_streak = max(0, streak - 1)` (show again)
+  - **Spacing Phase (After Graduation):**
+    - 3rd consecutive ✅ → `interval = 1 day`, `learning_threshold_met = true`
+    - Subsequent ✅ → `interval *= 2` (max 30 days)
+    - ❌ → `interval = 1 day`, reset to learning
+    - 😬 → `interval *= 0.5` (min 1 day)
 - [ ] Seed data: 5 letters in Slice 1 (/m/, /a/, /t/, /s/, /i/)
 - [ ] Seed data: 8–12 letters in Slice 2 (add /p/, /n/, /o/, /e/, /r/, etc.)
+- [ ] **Session Design:** Mix items in queue (e.g., "m, a, t, m, a, s, m..." not "m, m, m, a, a, a...")
+- [ ] **Rationale:** Young learners need multiple exposures (massed practice) before spacing kicks in. Research shows massed → spaced hybrid works better for ages 2-5 than pure spacing.
 
 ### TR3: Response Logging (CRITICAL)
 **Every mini-game must log detailed response data:**
