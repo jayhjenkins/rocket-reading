@@ -29,31 +29,42 @@ src/assets/
 
 ## Phase 1 Media Summary
 
+### CODE-FIRST APPROACH ✅
+
+**Phase 1 uses CSS/React for most UI elements (not images).** This reduces file count, speeds up development, and makes the app more maintainable.
+
+**Images ONLY needed for:** Mascot character (4 poses, 8 PNG files)
+
+**Rendered with code:** Buttons, letter tiles, icons, backgrounds, animations
+
+---
+
 ### Slice 1 (Foundation - LAUNCH PRIORITY)
 
 **Audio Required:**
-- 5 letter sounds: m, a, t, s, i
+- 5 letter sounds: m, a, t, s, i ✅ (uploaded)
 
 **Images Required:**
-- Mascot (4 poses): neutral, greeting, celebrating, encouraging
-- Grading buttons (3 types × 3 states): correct, help, wrong
-- UI icons (3–4): home, back, speaker, checkmark
-- Backgrounds (2): welcome, session
+- Mascot (4 poses × 2 sizes): neutral, greeting, celebrating, encouraging (8 PNG files)
 
-**Animations (Optional):**
-- Can ship Slice 1 with CSS-only animations
+**Code-Based (NO images needed):**
+- ✅ Grading buttons (CSS + emoji)
+- ✅ UI icons (Unicode emoji or SVG)
+- ✅ Backgrounds (CSS gradients)
+- ✅ Animations (CSS keyframes)
 
 ### Slice 2 (Foundation - Phase 1 Completion)
 
 **Audio Required:**
 - 7 additional letter sounds: p, n, o, e, r, d, l (total 12 letters)
+- Currently have: 10 of 12 ✅ (missing: d, l)
 
 **Images Required:**
-- Letter tiles (12 letters): Needed for Sound → Letter mini-game
+- None (mascot from Slice 1 reused)
 
-**Animations (Optional):**
-- Mascot celebration
-- Letter bounce
+**Code-Based (NO images needed):**
+- ✅ Letter tiles (styled text in React)
+- ✅ All animations (CSS)
 
 ## File Requirements
 

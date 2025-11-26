@@ -9,13 +9,16 @@
 - Platform-agnostic core logic (SR engine, mini-game framework) separates business logic from UI
 - Local storage via IndexedDB for offline-first persistence
 - Response logging from day 1 (critical for future Adventure Mode inference)
+- **CODE-FIRST UI:** Buttons, animations, icons rendered with CSS/React (not images)
 
 **Tech Stack:**
 - **Frontend:** React 18 + TypeScript + Vite
 - **Backend/Core:** Node.js + TypeScript (core logic runs in browser via bundled module)
 - **Storage:** IndexedDB (browser-based, no backend required for Phase 1)
 - **Testing:** Jest + React Testing Library for unit/integration tests
-- **Audio:** Pre-recorded letter sounds (PNG/WAV files)
+- **Audio:** Pre-recorded letter sounds (MP3/OGG/WAV files)
+- **Images:** Mascot character only (8 PNG files) - all UI elements are code-based
+- **Styling:** CSS modules + Unicode emoji (no button/icon image files)
 
 ---
 
@@ -989,6 +992,8 @@ Expected: FAIL - "Cannot find module '../LetterSoundGame'"
 
 **Step 4: Create LetterSoundGame component**
 
+**NOTE:** Grading buttons are code-based (CSS + emoji), NOT image files. This reduces file count and makes styling easier to change.
+
 Create `/Users/jay/Documents/rocketreading/src/ui/components/LetterSoundGame.tsx`:
 ```typescript
 import React, { useState, useEffect } from 'react'
@@ -1039,6 +1044,7 @@ export const LetterSoundGame: React.FC<LetterSoundGameProps> = ({ item, onSubmit
         <p>Listen and have your child say the sound aloud.</p>
       </div>
 
+      {/* CODE-BASED BUTTONS: Uses CSS + Unicode emoji (✅😬❌), no image files needed */}
       <div className={styles.gradingButtons}>
         <button
           className={`${styles.button} ${styles.buttonCorrect}`}
@@ -1069,8 +1075,11 @@ export const LetterSoundGame: React.FC<LetterSoundGameProps> = ({ item, onSubmit
 
 **Step 5: Create CSS module for styling**
 
+**NOTE:** All visual styling (backgrounds, button colors, hover/press animations) is CSS-based. No image files required.
+
 Create `/Users/jay/Documents/rocketreading/src/ui/components/LetterSoundGame.module.css`:
 ```css
+/* CODE-BASED UI: Background gradients, button styling, and animations */
 .container {
   display: flex;
   flex-direction: column;
