@@ -1,0 +1,13 @@
+{
+  "name": "rocketreading",
+  "version": "0.1.0",
+  "description": "Reading app built with Superpowers LLM framework",
+  "private": true,
+  "scripts": {
+    "test": "jest",
+    "dev": "node src/index.js"
+  },
+  "keywords": ["reading", "app"],
+  "author": "",
+  "license": "MIT"
+}

@@ -1,0 +1,9 @@
+{
+  "paths": {
+    "product_docs": "docs/product",
+    "source": "src",
+    "tests": "tests"
+  },
+  "framework": "superpowers",
+  "description": "Reading app built with Superpowers LLM framework"
+}
