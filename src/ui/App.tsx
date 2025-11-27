@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { Profile } from '../types'
+import { ProfileManager } from '../core/profile-manager'
 import { ProfileSetup } from './components/ProfileSetup'
 import { SessionScreen } from './components/SessionScreen'
 import styles from './App.module.css'
@@ -10,11 +11,10 @@ export const App: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    const loadProfile = () => {
-      const stored = localStorage.getItem('rocketreading_profile')
-      if (stored) {
-        const p = JSON.parse(stored) as Profile
-        p.created_at = new Date(p.created_at)
+    const loadProfile = async () => {
+      const profileManager = new ProfileManager()
+      const p = await profileManager.getProfile()
+      if (p) {
         setProfile(p)
       }
       setIsLoading(false)

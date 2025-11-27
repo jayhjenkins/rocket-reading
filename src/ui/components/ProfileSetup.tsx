@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { Profile } from '../../types'
+import { ProfileManager } from '../../core/profile-manager'
 import styles from './ProfileSetup.module.css'
 
 interface ProfileSetupProps {
@@ -15,15 +16,8 @@ export const ProfileSetup: React.FC<ProfileSetupProps> = ({ onProfileCreated }) 
     e.preventDefault()
     setIsSubmitting(true)
 
-    const profile: Profile = {
-      id: `child_${Date.now()}`,
-      name,
-      age,
-      created_at: new Date(),
-      current_world: 1
-    }
-
-    localStorage.setItem('rocketreading_profile', JSON.stringify(profile))
+    const profileManager = new ProfileManager()
+    const profile = await profileManager.createProfile(name, age)
     onProfileCreated(profile)
   }
 
