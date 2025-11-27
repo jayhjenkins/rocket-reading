@@ -1,8 +1,8 @@
 # Rocket Reading: System Architecture
 
-**Version:** 0.1 (Initial Draft)
+**Version:** 0.2 (Slice 1 Complete)
 **Last Updated:** 2025-11-26
-**Status:** Pre-Phase 1 (skeleton, to be populated during implementation)
+**Status:** Phase 1 in progress (Slice 1 complete)
 
 ---
 
@@ -16,18 +16,22 @@ This is the **single source of truth** for all technical decisions, data models,
 
 ## Document Status
 
-### Completed Sections
-- None yet (pre-Phase 1)
+### Completed in Slice 1
+- [x] Technology stack decisions (React, TypeScript, Vite, Jest)
+- [x] Platform and build system setup (Web-first with Vite)
+- [x] Core data models (Item, ItemState, Profile, Review, ResponseData)
+- [x] SR Engine architecture (massed+spaced hybrid, IndexedDB)
+- [x] Mini-game framework design (abstract class + LetterSoundGame)
+- [x] Response logging specification (detailed ResponseData capture)
+- [x] Local storage strategy (IndexedDB for offline-first)
+- [x] Testing framework setup (Jest + React Testing Library + fake-indexeddb)
 
-### To Be Completed in Phase 1 (Slices 1–2)
-- [ ] Technology stack decisions
-- [ ] Platform and build system setup
-- [ ] Core data models (Item, Profile, Review)
-- [ ] SR Engine architecture
-- [ ] Mini-game framework design
-- [ ] Response logging specification
-- [ ] Local storage strategy
-- [ ] Testing framework setup
+### To Be Completed in Future Slices
+- [ ] Quest Generator implementation (Slice 3)
+- [ ] Additional mini-game types (Slices 2-17)
+- [ ] Personalization Engine (Slice 7)
+- [ ] Parent Dashboard (Slice 5)
+- [ ] Multi-profile support (Slice F1)
 
 ---
 
@@ -62,23 +66,30 @@ This is the **single source of truth** for all technical decisions, data models,
 
 **Principle:** Core logic is platform-agnostic. UI is thin and focused on rendering + capture. All business logic lives in core systems.
 
-### Phase 1 Technology Stack
+### Phase 1 Technology Stack (✅ Decided in Slice 1)
 
-**Backend/Core Logic:**
-- Language: TBD (Python, Node.js, Go, or Rust) — prioritize developer velocity
-- Framework: TBD
-- Database: TBD (SQLite for offline, PostgreSQL for backend if cloud sync later)
+**Core Logic & Frontend:**
+- **Language:** TypeScript (type safety, excellent DX, broad ecosystem)
+- **Frontend Framework:** React 18 (component model, strong testing support, reusable for React Native later)
+- **Build Tool:** Vite 7.2 (fast HMR, modern ESM-based, excellent DX)
+- **Styling:** CSS Modules (scoped styles, no runtime overhead, simple mental model)
 
-**Phase 1 Frontend (Web):**
-- Framework: TBD (React, Vue, Svelte, or vanilla JS)
-- Styling: TBD (Tailwind, Bootstrap, or custom CSS)
-- Build tool: TBD (Vite, Webpack, or other)
+**Local Storage:**
+- **Primary:** IndexedDB (browser-native, offline-first, structured queries)
+- **Polyfill for Tests:** fake-indexeddb (enables Jest testing without browser)
 
-**Local Storage (Phase 1):**
-- Browser storage: IndexedDB or SQLite (via wasm)
-- Optional: Electron for desktop app feel during testing
+**Testing:**
+- **Framework:** Jest 29 (industry standard, excellent React support)
+- **React Testing:** React Testing Library 16 (best practices for component testing)
+- **Environment:** jsdom (simulates browser for Jest)
 
-**Rationale:** Web tech allows rapid UI iteration. Users can test in browser (desktop, iPad, Android). No native compilation required.
+**Rationale:**
+- TypeScript catches errors early, improves maintainability
+- React ecosystem is mature, well-documented, widely used
+- Vite provides instant feedback during development (sub-second HMR)
+- IndexedDB supports complex queries needed for SR scheduling
+- CSS Modules avoid global namespace pollution while keeping styling simple
+- Jest + RTL enforce testing best practices
 
 ### Phase 2+ Technology Stack (Native Platforms)
 
@@ -94,14 +105,63 @@ This is the **single source of truth** for all technical decisions, data models,
 
 **Note:** Native platforms reuse the same core logic (SR engine, quest generator, etc.) but with platform-specific UI implementations.
 
-### Key Libraries & Dependencies
-(To be documented as dependencies are added)
+### Key Libraries & Dependencies (Slice 1)
 
-### Build System
-(To be documented in Phase 1)
+**Production Dependencies:**
+- `react@18.3.1` - UI framework
+- `react-dom@18.3.1` - React DOM renderer
+- `typescript@5.9.3` - Type system
+- `vite@7.2.4` - Build tool
+- `@vitejs/plugin-react@5.1.1` - React support for Vite
 
-### Development Environment
-(To be documented in Phase 1)
+**Development Dependencies:**
+- `jest@29.7.0` - Test runner
+- `ts-jest@29.4.5` - TypeScript support for Jest
+- `@testing-library/react@16.3.0` - React component testing
+- `@testing-library/jest-dom@6.9.1` - DOM matchers for Jest
+- `@testing-library/user-event@14.6.1` - User interaction simulation
+- `jest-environment-jsdom@29.7.0` - Browser environment for tests
+- `fake-indexeddb@6.2.5` - IndexedDB polyfill for tests
+- `identity-obj-proxy@3.0.0` - CSS module mocking for tests
+
+### Build System (Slice 1)
+
+**Build Configuration:** `vite.config.ts`
+- Uses `@vitejs/plugin-react` for Fast Refresh
+- Dev server on port 3000 with auto-open
+- Production builds to `dist/` directory
+- CSS modules auto-detected via `*.module.css` naming
+
+**TypeScript Configuration:** `tsconfig.json`
+- Target: ES2020
+- JSX: react-jsx (new JSX transform)
+- Strict mode enabled
+- Module resolution: node
+
+**Test Configuration:** `jest.config.js`
+- Preset: ts-jest
+- Environment: jsdom
+- Matches: `**/__tests__/**/*.test.{ts,tsx}`
+- Setup: `src/setupTests.ts` (loads polyfills)
+- Coverage: src/**/*.{ts,tsx} (excludes tests)
+
+### Development Environment (Slice 1)
+
+**Required:**
+- Node.js 23.3.0 (or compatible)
+- npm 10.9.0
+
+**Scripts:**
+- `npm run dev` - Start Vite dev server (http://localhost:3000)
+- `npm run build` - Production build
+- `npm run preview` - Preview production build
+- `npm test` - Run Jest tests
+- `npm run test:watch` - Run tests in watch mode
+
+**Hot Module Replacement:**
+- Vite provides instant HMR for React components
+- Changes reflect in browser within 100ms
+- State preservation during HMR when possible
 
 ---
 
@@ -182,7 +242,9 @@ Phase 1 (Web) / Phase 2+ (Native):
 
 **Purpose:** Schedule item reviews, log responses, update intervals based on performance.
 
-**Status:** To be implemented in Slice 1
+**Status:** ✅ Implemented in Slice 1
+
+**Implementation:** `src/core/sr-engine.ts` (SREngine class)
 
 **Key Responsibilities:**
 - Maintain item library (letters, words, sentences, tricky words)
@@ -191,14 +253,27 @@ Phase 1 (Web) / Phase 2+ (Native):
 - Update intervals based on review ratings (✅/😬/❌)
 - Support multiple item types (letters, words, sentences, tricky words)
 
-**API (preliminary):**
+**API (✅ Implemented):**
+```typescript
+class SREngine {
+  async initialize(): Promise<void>
+  async seedItems(profileId: string, items: Item[]): Promise<void>
+  async getDueItems(profileId: string, date: Date): Promise<Item[]>
+  async logReview(profileId: string, itemId: string, rating: Rating, responseData: ResponseData): Promise<void>
+  async getItemState(profileId: string, itemId: string): Promise<ItemState>
+  async updateItemState(profileId: string, state: ItemState): Promise<void>
+  async getAllItems(profileId: string): Promise<Item[]>
+  async getLastReview(profileId: string, itemId: string): Promise<Review | undefined>
+}
 ```
-// To be refined during implementation
-getDueItems(profileId: string, date: Date) -> Item[]
-logReview(profileId: string, itemId: string, rating: Rating) -> void
-getItemStatus(profileId: string, itemId: string) -> ItemState
-getWeakItems(profileId: string) -> Item[]
-```
+
+**Storage Implementation:**
+- Uses IndexedDB with three object stores:
+  - `items` - Item library (keyPath: 'id')
+  - `item_states` - Per-profile state tracking (keyPath: 'id' as composite `${profileId}_${itemId}`)
+  - `reviews` - Review history with response data (keyPath: 'id')
+- Indexes on `profile_id` and `next_due` for efficient queries
+- All operations return Promises for async consistency
 
 **Data Models:**
 ```typescript
@@ -338,7 +413,11 @@ interface MiniGameConfig {
 
 **Purpose:** Pluggable system for implementing various mini-game types with consistent response logging and grading interface.
 
-**Status:** To be implemented in Slice 1 (one mini-game), expanded over phases
+**Status:** ✅ Implemented in Slice 1 (LetterSoundGame complete)
+
+**Implementation:**
+- Abstract base class: `src/core/mini-game.ts` (MiniGame)
+- First mini-game: `src/ui/components/LetterSoundGame.tsx`
 
 **Key Responsibilities:**
 - Display mini-game UI based on config
@@ -352,7 +431,7 @@ interface MiniGameConfig {
 
 | Type | Introduced | Description |
 |------|------------|-------------|
-| `letter_sound` | Slice 1 | Show letter, child says sound, parent grades |
+| `letter_sound` | ✅ Slice 1 | Show letter, child says sound, parent grades |
 | `sound_letter` | Slice 2 | Play sound, child taps letter |
 | `same_different` | Slice 4 | Play two sounds, child taps same/different |
 | `first_sound` | Slice 4 | Play word, child taps matching first letter |
@@ -361,6 +440,14 @@ interface MiniGameConfig {
 | `read_sentence` | Slice 11 | Show sentence, child reads, parent grades fluency |
 | `blend_complex` | Slice 12 | Blend with digraphs/multi-phoneme patterns |
 | `tricky_word` | Slice 15 | Recognize irregular high-frequency words |
+
+**LetterSoundGame Implementation (Slice 1):**
+- **UI Approach:** Code-based (CSS gradients + Unicode emoji, no image files)
+- **Grading Buttons:** ✅ Got it / 😬 Needed help / ❌ Didn't know
+- **Response Logging:** Captures response_time_ms, raw_response, hints_used
+- **Styling:** CSS Modules with purple gradient background, responsive layout
+- **Accessibility:** Proper button labels, disabled states during submission
+- **Testing:** 5 comprehensive tests (render, grading, timing, interaction)
 
 **API (preliminary):**
 ```
@@ -476,19 +563,53 @@ interface SkillStrand {
 
 ---
 
+### 6. Profile Management
+
+**Purpose:** Create and persist child profiles with localStorage abstraction.
+
+**Status:** ✅ Implemented in Slice 1
+
+**Implementation:** `src/core/profile-manager.ts` (ProfileManager class)
+
+**Key Responsibilities:**
+- Create new child profiles
+- Retrieve existing profile
+- Check if profile exists
+- Handle profile persistence in localStorage
+
+**API:**
+```typescript
+class ProfileManager {
+  async createProfile(name: string, age: number): Promise<Profile>
+  async getProfile(): Promise<Profile | null>
+  async hasProfile(): Promise<boolean>
+}
+```
+
+**Storage:**
+- Uses localStorage key: `rocketreading_profile`
+- Single profile per device (Slice 1)
+- Future: Multi-profile support (Slice F1)
+
+**UI Components:**
+- `ProfileSetup.tsx` - Profile creation form
+- `App.tsx` - Profile loading on app start
+- Both components use ProfileManager abstraction (no direct localStorage access)
+
+---
+
 ## Data Storage
 
 ### Local Storage Strategy
 
-**Primary Storage:** (TBD in Phase 1)
+**Primary Storage:** IndexedDB (✅ Decided in Slice 1)
 
-**Options:**
-- Core Data (iOS native)
-- SQLite (portable, testable)
-- Realm (mobile-first)
-- File-based JSON (simple, debuggable)
-
-**Decision:** TBD in Phase 1
+**Implementation Details:**
+- Database: `rocketreading_db` (version 1)
+- Three object stores: `items`, `item_states`, `reviews`
+- Composite keys using string concatenation (e.g., `${profileId}_${itemId}`)
+- Indexes on `profile_id` and `next_due` for query performance
+- All operations wrapped in Promises for async consistency
 
 **Key Requirements:**
 - Offline-first (app works without internet)
@@ -590,7 +711,179 @@ interface SkillStrand {
 
 ## Architecture Decision Records (ADRs)
 
-(To be added as major architectural decisions are made)
+### ADR-001: Web-First Development with React + TypeScript + Vite
+
+**Date:** 2025-11-26
+**Status:** Accepted (Slice 1)
+
+**Context:** Need to choose technology stack for Phase 1 rapid iteration and user validation.
+
+**Decision:** Use React 18 + TypeScript + Vite for web-first development.
+
+**Rationale:**
+- TypeScript provides type safety and catches errors early
+- React has mature ecosystem, excellent testing tools, and is reusable for React Native later
+- Vite provides instant HMR (<100ms) for fast iteration
+- Web deployment allows remote testing without native builds
+- Proven stack with strong community support
+
+**Consequences:**
+- ✅ Fast iteration during Phase 1
+- ✅ Easy to test with users remotely (any browser)
+- ✅ Strong typing prevents runtime errors
+- ⚠️ Will need platform-specific UI for native apps later (planned)
+
+**Alternatives Considered:**
+- Vue/Svelte (less mature React Native path)
+- Vanilla JS (no type safety)
+- Native-first (slower iteration, harder to test remotely)
+
+---
+
+### ADR-002: IndexedDB for Local Storage
+
+**Date:** 2025-11-26
+**Status:** Accepted (Slice 1)
+
+**Context:** Need offline-first storage for SR state, reviews, and profiles.
+
+**Decision:** Use IndexedDB as primary local storage mechanism.
+
+**Rationale:**
+- Browser-native, no external dependencies
+- Supports structured queries (crucial for "due items" queries)
+- Offline-first by default
+- Works across all modern browsers
+- Testable with fake-indexeddb polyfill
+
+**Consequences:**
+- ✅ Offline-capable from day one
+- ✅ Fast queries with indexes
+- ✅ Testable without browser
+- ⚠️ Async API requires Promise handling everywhere
+- ⚠️ Compound keys require workaround (using string concatenation)
+
+**Alternatives Considered:**
+- localStorage (too simple, no queries)
+- SQLite via wasm (adds complexity, larger bundle)
+- File-based JSON (no query support)
+
+---
+
+### ADR-003: CSS Modules for Styling
+
+**Date:** 2025-11-26
+**Status:** Accepted (Slice 1)
+
+**Context:** Need scoped styling without global namespace pollution.
+
+**Decision:** Use CSS Modules for component styling.
+
+**Rationale:**
+- Scoped styles prevent naming collisions
+- No runtime overhead (build-time transformation)
+- Simple mental model (just CSS)
+- Vite supports out of the box
+- No learning curve for standard CSS
+
+**Consequences:**
+- ✅ Clean separation of styles per component
+- ✅ No global namespace issues
+- ✅ Standard CSS (easy to understand)
+- ⚠️ Slightly more verbose imports
+
+**Alternatives Considered:**
+- Tailwind (more dependencies, utility-first learning curve)
+- Styled-components (runtime overhead)
+- Global CSS (namespace pollution)
+
+---
+
+### ADR-004: Jest + React Testing Library for Testing
+
+**Date:** 2025-11-26
+**Status:** Accepted (Slice 1)
+
+**Context:** Need comprehensive testing for SR engine, components, and integration flows.
+
+**Decision:** Use Jest 29 + React Testing Library for all testing.
+
+**Rationale:**
+- Jest is industry standard with excellent React support
+- RTL enforces testing best practices (user-centric tests)
+- fake-indexeddb enables testing IndexedDB code without browser
+- jsdom simulates browser environment
+- Fast test execution (<2s for full suite)
+
+**Consequences:**
+- ✅ Comprehensive test coverage (19 tests passing)
+- ✅ Tests run in CI/CD without browser
+- ✅ Encourages user-centric testing patterns
+- ⚠️ Setup complexity for IndexedDB polyfill
+
+**Alternatives Considered:**
+- Vitest (newer, less mature)
+- Cypress (slower, E2E focus)
+- No testing framework (unacceptable)
+
+---
+
+### ADR-005: Massed + Spaced Hybrid SR Algorithm
+
+**Date:** 2025-11-26
+**Status:** Accepted (Slice 1)
+
+**Context:** Ages 2-5 need multiple exposures before memory consolidation. Pure spaced repetition causes early forgetting.
+
+**Decision:** Use massed practice (3 correct in a row, interval=0) before graduating to spaced intervals.
+
+**Rationale:**
+- Young children (2-5) need massed practice for initial learning
+- 3-correct threshold balances confidence with efficiency
+- Spacing after graduation ensures long-term retention
+- Simpler than full SM-2 (easier to validate with real kids)
+- 30-day cap prevents items from being buried too long
+
+**Consequences:**
+- ✅ Better suited for ages 2-5 than pure spaced repetition
+- ✅ Reduces early frustration (items repeat until mastered)
+- ✅ Simpler algorithm (easier to debug and explain to parents)
+- ⚠️ More reviews required initially (intended trade-off)
+
+**Alternatives Considered:**
+- Pure spaced repetition (not suitable for ages 2-5)
+- Full SM-2 algorithm (too complex for this age group)
+- Fixed intervals (ignores individual learning patterns)
+
+---
+
+### ADR-006: ProfileManager Abstraction Layer
+
+**Date:** 2025-11-26
+**Status:** Accepted (Slice 1 refactor)
+
+**Context:** Components were directly accessing localStorage, violating DRY and making future multi-profile support harder.
+
+**Decision:** Create ProfileManager class to abstract all profile storage operations.
+
+**Rationale:**
+- Single source of truth for profile management
+- Easier to test (mock ProfileManager vs localStorage)
+- Future multi-profile support requires this abstraction anyway
+- Consistent with SREngine pattern (abstraction over storage)
+- Eliminates duplicate localStorage key strings
+
+**Consequences:**
+- ✅ Cleaner component code
+- ✅ Easier to test
+- ✅ Foundation for multi-profile support (Slice F1)
+- ⚠️ Small refactor required (completed in Slice 1)
+
+**Alternatives Considered:**
+- Direct localStorage in components (rejected - violates DRY)
+- Global state manager (overkill for single profile)
+
+---
 
 ### ADR Template:
 ```markdown
@@ -647,8 +940,16 @@ interface SkillStrand {
 
 ## Document History
 
-- **2025-11-26:** Initial skeleton created (pre-Phase 1)
-- **(Future entries will be added as implementation progresses)**
+- **2025-11-26 (morning):** Initial skeleton created (pre-Phase 1)
+- **2025-11-26 (evening):** Slice 1 complete - updated with full implementation details:
+  - Technology stack finalized (React + TypeScript + Vite + Jest)
+  - SR Engine implemented with IndexedDB
+  - Mini-game framework created with LetterSoundGame
+  - Profile management system implemented
+  - Session flow completed
+  - 6 ADRs documented (tech stack, storage, styling, testing, SR algorithm, ProfileManager)
+  - 19 tests passing
+  - Production build successful (152kB JS + 4.5kB CSS)
 
 ---
 
