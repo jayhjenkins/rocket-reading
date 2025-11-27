@@ -1,0 +1,45 @@
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  font-size: 1.5rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.homeScreen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.homeScreen h1 {
+  font-size: 3rem;
+  margin-bottom: 20px;
+}
+
+.homeScreen p {
+  font-size: 1.5rem;
+  margin-bottom: 40px;
+}
+
+.homeScreen button {
+  padding: 20px 60px;
+  font-size: 1.5rem;
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background-color 0.2s;
+}
+
+.homeScreen button:hover {
+  background-color: #45a049;
+}
