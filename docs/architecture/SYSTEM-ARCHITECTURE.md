@@ -1,8 +1,8 @@
 # Rocket Reading: System Architecture
 
-**Version:** 0.2 (Slice 1 Complete)
-**Last Updated:** 2025-11-26
-**Status:** Phase 1 in progress (Slice 1 complete)
+**Version:** 0.3 (Slice 2 Complete)
+**Last Updated:** 2025-11-28
+**Status:** Phase 1 in progress (Slice 2 complete)
 
 ---
 
@@ -25,6 +25,16 @@ This is the **single source of truth** for all technical decisions, data models,
 - [x] Response logging specification (detailed ResponseData capture)
 - [x] Local storage strategy (IndexedDB for offline-first)
 - [x] Testing framework setup (Jest + React Testing Library + fake-indexeddb)
+
+### Completed in Slice 2
+- [x] Expanded letter library to 13 letters (World 1 complete set: m, a, t, s, i, p, n, o, e, r, d, h, l)
+- [x] Implemented SoundLetterGame (recognition mini-game - tap letter from audio prompt)
+- [x] Mixed mini-game type selection (50/50 letter_sound/sound_letter - temporary bridge to Slice 3)
+- [x] World completion detection logic (≥90% accuracy on all letters with ≥5 reviews each)
+- [x] Treehouse overworld scene (simple visual home with progress tracking)
+- [x] Audio playback system (pre-recorded MP3/WAV/OGG files for all 13 letters)
+- [x] Response logging validated across both mini-game types
+- [x] Session size expanded from 5 → 10 items
 
 ### To Be Completed in Future Slices
 - [ ] Quest Generator implementation (Slice 3)
@@ -432,7 +442,7 @@ interface MiniGameConfig {
 | Type | Introduced | Description |
 |------|------------|-------------|
 | `letter_sound` | ✅ Slice 1 | Show letter, child says sound, parent grades |
-| `sound_letter` | Slice 2 | Play sound, child taps letter |
+| `sound_letter` | ✅ Slice 2 | Play sound, child taps letter from 4 options |
 | `same_different` | Slice 4 | Play two sounds, child taps same/different |
 | `first_sound` | Slice 4 | Play word, child taps matching first letter |
 | `blend_word` | Slice 8 | Drag letter tiles, blend into word |
@@ -448,6 +458,16 @@ interface MiniGameConfig {
 - **Styling:** CSS Modules with purple gradient background, responsive layout
 - **Accessibility:** Proper button labels, disabled states during submission
 - **Testing:** 5 comprehensive tests (render, grading, timing, interaction)
+
+**SoundLetterGame Implementation (Slice 2):**
+- **UI Approach:** Code-based (CSS Modules, emoji for sound button)
+- **Interaction:** Child taps letter from 4 options after hearing sound
+- **Audio:** Auto-plays sound on mount, replay button available
+- **Feedback:** Wrong tap shows hint with correct sound, correct tap shows celebration
+- **Hint System:** Tracks hints_used for each wrong tap
+- **Response Logging:** Captures tapped_letter, response_time_ms, hints_used, options shown
+- **Grading:** Parent grades after correct letter is tapped
+- **Testing:** 6 comprehensive tests (render, options, hints, grading, response logging)
 
 **API (preliminary):**
 ```
@@ -705,7 +725,48 @@ class ProfileManager {
 
 ## Known Limitations & Technical Debt
 
-(To be documented as discovered during implementation)
+### AudioPlayer Platform Abstraction (Phase 1 → Phase 2+ Migration)
+
+**Issue:** AudioPlayer is located in `src/core/` (platform-agnostic layer) but uses browser-specific APIs (HTMLAudioElement).
+
+**Current Status (Phase 1):** Acceptable for web-first development. AudioPlayer works correctly in browser environment.
+
+**Technical Debt for Phase 2+:** When migrating to native platforms (iPad/Android), AudioPlayer needs platform abstraction.
+
+**Recommended Approaches:**
+
+**Option A: Abstract Interface Pattern (Recommended)**
+- Keep AudioPlayer interface in `src/core/`
+- Create platform-specific implementations:
+  - `src/ui/audio/WebAudioPlayer.ts` (current HTMLAudioElement implementation)
+  - `src/ui/audio/iOSAudioPlayer.swift` (AVAudioPlayer for iPad)
+  - `src/ui/audio/AndroidAudioPlayer.kt` (MediaPlayer for Android)
+- Dependency injection: Pass platform-specific player to mini-games
+
+**Option B: Move to UI Layer**
+- Move AudioPlayer entirely to `src/ui/audio/`
+- Acknowledge it's UI-layer concern (like rendering)
+- Create separate implementations per platform
+
+**Option C: Platform Detection**
+- Single AudioPlayer with platform detection
+- Use HTMLAudioElement for web, native APIs for mobile
+- More complex, harder to test
+
+**Impact:**
+- **Phase 1 (Slice 2):** No action needed, current implementation works
+- **Phase 2+ Planning:** Must address before iPad implementation begins
+- **Estimated Effort:** 2-3 hours to abstract interface + implement platform-specific versions
+- **Risk:** Low (audio API abstraction is straightforward)
+
+**Action Items for Phase 2:**
+1. Review audio playback requirements for iPad/Android (AVAudioPlayer, MediaPlayer APIs)
+2. Design AudioPlayer interface abstraction
+3. Refactor mini-games to accept injected AudioPlayer instance
+4. Implement platform-specific versions
+5. Update tests to mock interface rather than HTMLAudioElement
+
+**Related ADR:** ADR-007 documents current browser-based implementation but does not address platform migration.
 
 ---
 
@@ -885,6 +946,51 @@ class ProfileManager {
 
 ---
 
+### ADR-007: Pre-recorded Audio Files for Letter Sounds
+
+**Date:** 2025-11-28
+**Status:** Accepted (Slice 2)
+
+**Context:** Need high-quality audio playback for letter sounds to teach correct phoneme pronunciation.
+
+**Decision:** Use pre-recorded MP3/WAV/OGG audio files for all 13 World 1 letter sounds.
+
+**Rationale:**
+- Consistent, high-quality pronunciation across all devices
+- No dependency on browser TTS quality (which varies widely)
+- Proper phoneme sounds (not letter names) critical for Science of Reading alignment
+- Multiple formats ensure cross-browser compatibility (MP3 for most browsers, OGG for Firefox fallback)
+- Audio files already sourced and ready (~12KB per letter in MP3 format)
+
+**Consequences:**
+- ✅ Production-quality audio from Slice 2 onward
+- ✅ Consistent learning experience across devices
+- ✅ No browser TTS variation issues
+- ✅ Proper phoneme sounds for Science of Reading alignment
+- ✅ Preloading for instant playback (no latency)
+- ⚠️ Slightly larger bundle size (~156 KB for 13 letters × 3 formats, but only MP3s load)
+
+**Implementation:**
+- Files located in `src/assets/audio/letter_*.mp3` (primary), `*.ogg` (Firefox), `*.wav` (fallback)
+- AudioPlayer class preloads all sounds on initialization using HTMLAudioElement
+- Browser selects best format automatically
+- Test environment mocks HTMLMediaElement.play() to avoid jsdom limitations
+- Audio plays after grading in LetterSoundGame and on mount/replay in SoundLetterGame
+
+**Alternatives Considered:**
+- Browser TTS (rejected - inconsistent quality, pronunciation varies)
+- External audio service (rejected - adds latency, requires internet)
+- No audio (rejected - critical for phonics instruction)
+
+**Platform Migration Note:**
+- Current implementation uses browser-specific HTMLAudioElement
+- Located in `src/core/` but not truly platform-agnostic
+- **Phase 2+ Action Required:** Abstract AudioPlayer interface before iPad implementation
+- See "Known Limitations & Technical Debt" → "AudioPlayer Platform Abstraction" for migration plan
+- Estimated effort: 2-3 hours to refactor for platform abstraction
+
+---
+
 ### ADR Template:
 ```markdown
 ## ADR-XXX: [Decision Title]
@@ -908,6 +1014,15 @@ class ProfileManager {
 - Adventure Mode (child-only inference)
 - Voice recognition for spoken responses
 - Teacher mode & classroom features
+
+### Platform Migration (Phase 1 → Phase 2+)
+- **AudioPlayer abstraction** (REQUIRED before iPad implementation)
+  - Current: Browser-specific HTMLAudioElement in `src/core/`
+  - Future: Platform-agnostic interface with platform-specific implementations
+  - See "Known Limitations & Technical Debt" for detailed migration plan
+- Native UI implementations (SwiftUI for iPad, Jetpack Compose for Android)
+- Platform-specific build pipelines
+- Audio file format considerations (iOS prefers M4A, Android prefers MP3)
 
 ### Scalability
 - How will architecture handle 200+ SR items per child?
@@ -950,6 +1065,17 @@ class ProfileManager {
   - 6 ADRs documented (tech stack, storage, styling, testing, SR algorithm, ProfileManager)
   - 19 tests passing
   - Production build successful (152kB JS + 4.5kB CSS)
+- **2025-11-28:** Slice 2 complete - expanded World 1 content and features:
+  - Letter library expanded to 13 letters (m, a, t, s, i, p, n, o, e, r, d, h, l)
+  - SoundLetterGame implemented (recognition mini-game with hint system)
+  - Mixed mini-game type selection (50/50 temporary bridge to Slice 3 Quest Generator)
+  - WorldCompletion class for progress tracking (≥90% accuracy on all letters)
+  - Treehouse overworld component with animated mascot and progress display
+  - AudioPlayer with pre-recorded MP3/WAV/OGG files for all 13 letters
+  - Session size expanded from 5 → 10 items
+  - ADR-007 documented (pre-recorded audio files)
+  - 42 tests passing (23 new tests added)
+  - All integration tests passing for full session flows
 
 ---
 

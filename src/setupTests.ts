@@ -18,3 +18,15 @@ if (typeof global.structuredClone === 'undefined') {
     return clonedObj;
   };
 }
+
+// Mock HTMLAudioElement for audio playback in tests
+// jsdom doesn't implement play/pause methods
+window.HTMLMediaElement.prototype.play = () => Promise.resolve();
+window.HTMLMediaElement.prototype.pause = () => {};
+window.HTMLMediaElement.prototype.load = () => {};
+
+// Mock readyState to indicate audio is ready (HAVE_ENOUGH_DATA = 4)
+Object.defineProperty(window.HTMLMediaElement.prototype, 'readyState', {
+  get() { return 4; },
+  configurable: true
+});

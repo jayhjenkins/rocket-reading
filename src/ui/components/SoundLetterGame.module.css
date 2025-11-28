@@ -1,0 +1,163 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 80vh;
+  padding: 2rem;
+}
+
+.prompt {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.soundButton {
+  font-size: 3rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+  border-radius: 50%;
+  width: 120px;
+  height: 120px;
+  cursor: pointer;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  transition: transform 0.2s;
+}
+
+.soundButton:hover {
+  transform: scale(1.05);
+}
+
+.soundButton:active {
+  transform: scale(0.95);
+}
+
+.prompt p {
+  font-size: 1.5rem;
+  margin-top: 1rem;
+  color: #333;
+}
+
+.letterOptions {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.letterTile {
+  font-size: 5rem;
+  font-weight: bold;
+  background: white;
+  border: 4px solid #667eea;
+  border-radius: 20px;
+  width: 150px;
+  height: 150px;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.letterTile:hover:not(:disabled) {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+}
+
+.letterTile:active:not(:disabled) {
+  transform: scale(0.95);
+}
+
+.letterTile.selected {
+  background: #667eea;
+  color: white;
+  border-color: #764ba2;
+}
+
+.letterTile:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.hint {
+  background: #fff3cd;
+  border: 2px solid #ffc107;
+  border-radius: 10px;
+  padding: 1rem 2rem;
+  font-size: 1.2rem;
+  text-align: center;
+  margin-bottom: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.hintText {
+  margin: 0;
+}
+
+.countdownBar {
+  width: 100%;
+  height: 8px;
+  background: rgba(255, 193, 7, 0.3);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.countdownFill {
+  height: 100%;
+  background: linear-gradient(90deg, #ffc107 0%, #ff9800 100%);
+  border-radius: 4px;
+  transition: width 50ms linear;
+}
+
+.feedback {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.celebration {
+  font-size: 2rem;
+  font-weight: bold;
+  color: #28a745;
+}
+
+.gradingButtons {
+  display: flex;
+  gap: 1rem;
+}
+
+.gradingButtons button {
+  font-size: 1.2rem;
+  padding: 1rem 2rem;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: bold;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s;
+}
+
+.gradingButtons button:hover {
+  transform: translateY(-2px);
+}
+
+.gradingButtons button:active {
+  transform: scale(0.98);
+}
+
+.gradingButtons button:first-child {
+  background: #28a745;
+  color: white;
+}
+
+.gradingButtons button:nth-child(2) {
+  background: #ffc107;
+  color: #333;
+}
+
+.gradingButtons button:last-child {
+  background: #dc3545;
+  color: white;
+}

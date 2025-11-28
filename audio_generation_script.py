@@ -51,10 +51,10 @@ LETTER_PHONEMES = {
 
     # Consonants – text-based prompts
     # "m": {"mode": "text", "text": "mmm",   "example": "mat"},
-    "p": {"mode": "text", "text": "peh",   "example": "pen"},    # explicitly "puh"
-    # "t": {"mode": "text", "text": "tuh",   "example": "tap"},    # explicitly "tuh"
-    # "s": {"mode": "text", "text": "ssss",  "example": "sun"},
-    # "n": {"mode": "text", "text": "nnn",   "example": "nose"},
+    # "p": {"mode": "text", "text": "pu.",   "example": "pen"},    # explicitly "puh"
+    # "d": {"mode": "text", "text": "duh",   "example": "dog"},    # explicitly "duh"
+    "h": {"mode": "text", "text": "hhhuh",  "example": "hot"},
+    # "l": {"mode": "text", "text": "luh.",   "example": "low"},
     # "r": {"mode": "text", "text": "rrr",   "example": "red"},
 }
 

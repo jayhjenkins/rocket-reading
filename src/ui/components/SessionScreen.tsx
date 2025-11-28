@@ -2,24 +2,30 @@ import React, { useState, useEffect } from 'react'
 import { Profile, Item } from '../../types'
 import { SREngine } from '../../core/sr-engine'
 import { LetterSoundGame } from './LetterSoundGame'
+import { SoundLetterGame } from './SoundLetterGame'
+import { WORLD_1_LETTERS } from '../../data/world-1-letters'
 import styles from './SessionScreen.module.css'
 
-const SEED_ITEMS: Item[] = [
-  { id: 'letter_m', type: 'letter', content: 'm', world: 1, metadata: { phonics_coverage: ['m'] } },
-  { id: 'letter_a', type: 'letter', content: 'a', world: 1, metadata: { phonics_coverage: ['a'] } },
-  { id: 'letter_t', type: 'letter', content: 't', world: 1, metadata: { phonics_coverage: ['t'] } },
-  { id: 'letter_s', type: 'letter', content: 's', world: 1, metadata: { phonics_coverage: ['s'] } },
-  { id: 'letter_i', type: 'letter', content: 'i', world: 1, metadata: { phonics_coverage: ['i'] } },
-]
+// TEMPORARY: 50/50 random game type assignment
+// This will be replaced by Quest Generator in Slice 3
+// Isolated for easy swapping
+const assignGameType = (item: Item): 'letter_sound' | 'sound_letter' => {
+  return Math.random() < 0.5 ? 'letter_sound' : 'sound_letter'
+}
+
+interface ItemWithGameType {
+  item: Item
+  gameType: 'letter_sound' | 'sound_letter'
+}
 
 interface SessionScreenProps {
   profile: Profile
-  onSessionComplete: () => void
+  onSessionComplete: () => void | Promise<void>
 }
 
 export const SessionScreen: React.FC<SessionScreenProps> = ({ profile, onSessionComplete }) => {
   const [srEngine] = useState(() => new SREngine())
-  const [dueItems, setDueItems] = useState<Item[]>([])
+  const [dueItems, setDueItems] = useState<ItemWithGameType[]>([])
   const [currentItemIndex, setCurrentItemIndex] = useState(0)
   const [isLoading, setIsLoading] = useState(true)
   const [sessionComplete, setSessionComplete] = useState(false)
@@ -32,12 +38,19 @@ export const SessionScreen: React.FC<SessionScreenProps> = ({ profile, onSession
         // Seed items if not already seeded
         const existingItems = await srEngine.getAllItems(profile.id)
         if (existingItems.length === 0) {
-          await srEngine.seedItems(profile.id, SEED_ITEMS)
+          await srEngine.seedItems(profile.id, WORLD_1_LETTERS)
         }
 
         // Get due items
         const items = await srEngine.getDueItems(profile.id, new Date())
-        setDueItems(items.slice(0, 5)) // Limit to 5 items per session
+
+        // Assign game types and limit to 10 items per session (expanded from 5)
+        const itemsWithGames = items.slice(0, 10).map(item => ({
+          item,
+          gameType: assignGameType(item)
+        }))
+
+        setDueItems(itemsWithGames)
         setIsLoading(false)
       } catch (error) {
         console.error('Failed to initialize session:', error)
@@ -50,8 +63,8 @@ export const SessionScreen: React.FC<SessionScreenProps> = ({ profile, onSession
 
   const handleGameSubmit = async (rating: 'correct' | 'needed_help' | 'incorrect', responseData: any) => {
     try {
-      const currentItem = dueItems[currentItemIndex]
-      await srEngine.logReview(profile.id, currentItem.id, rating, responseData)
+      const currentItemConfig = dueItems[currentItemIndex]
+      await srEngine.logReview(profile.id, currentItemConfig.item.id, rating, responseData)
 
       if (currentItemIndex < dueItems.length - 1) {
         setCurrentItemIndex(currentItemIndex + 1)
@@ -86,16 +99,23 @@ export const SessionScreen: React.FC<SessionScreenProps> = ({ profile, onSession
     )
   }
 
-  const currentItem = dueItems[currentItemIndex]
+  const currentItemConfig = dueItems[currentItemIndex]
   return (
     <div>
       <div className={styles.sessionInfo}>
         <p>Item {currentItemIndex + 1} of {dueItems.length}</p>
       </div>
-      <LetterSoundGame
-        item={currentItem}
-        onSubmit={handleGameSubmit}
-      />
+      {currentItemConfig.gameType === 'letter_sound' ? (
+        <LetterSoundGame
+          item={currentItemConfig.item}
+          onSubmit={handleGameSubmit}
+        />
+      ) : (
+        <SoundLetterGame
+          item={currentItemConfig.item}
+          onSubmit={handleGameSubmit}
+        />
+      )}
     </div>
   )
 }

@@ -1,0 +1,112 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background: linear-gradient(to bottom, #87CEEB 0%, #98D8C8 100%);
+  padding: 2rem;
+}
+
+.sky {
+  position: absolute;
+  top: 2rem;
+  width: 100%;
+  text-align: center;
+}
+
+.clouds {
+  font-size: 3rem;
+  animation: float 6s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+.treehouse {
+  position: relative;
+  margin: 2rem 0;
+  font-size: 8rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.tree {
+  font-size: 10rem;
+}
+
+.house {
+  position: absolute;
+  top: 2rem;
+  font-size: 6rem;
+}
+
+.mascot {
+  position: absolute;
+  bottom: 4rem;
+  font-size: 5rem;
+  animation: wave 2s ease-in-out infinite;
+}
+
+@keyframes wave {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(10deg); }
+  75% { transform: rotate(-10deg); }
+}
+
+.greeting {
+  text-align: center;
+  margin: 2rem 0;
+  color: #333;
+}
+
+.greeting h1 {
+  font-size: 2.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.greeting p {
+  font-size: 1.5rem;
+  color: #666;
+}
+
+.progress {
+  background: white;
+  border-radius: 15px;
+  padding: 1.5rem 3rem;
+  margin: 1rem 0;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  text-align: center;
+}
+
+.progress p {
+  font-size: 1.2rem;
+  margin: 0.5rem 0;
+  color: #333;
+  font-weight: 500;
+}
+
+.startButton {
+  font-size: 1.8rem;
+  padding: 1.5rem 4rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 50px;
+  cursor: pointer;
+  font-weight: bold;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.startButton:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.25);
+}
+
+.startButton:active {
+  transform: scale(0.98);
+}

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { Item, Rating, ResponseData } from '../../types'
+import { AudioPlayer } from '../../core/audio-player'
 import styles from './LetterSoundGame.module.css'
 
 interface LetterSoundGameProps {
@@ -10,6 +11,7 @@ interface LetterSoundGameProps {
 export const LetterSoundGame: React.FC<LetterSoundGameProps> = ({ item, onSubmit }) => {
   const [startTime, setStartTime] = useState<number>(0)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [audioPlayer] = useState(() => new AudioPlayer())
 
   useEffect(() => {
     setStartTime(Date.now())
@@ -20,6 +22,9 @@ export const LetterSoundGame: React.FC<LetterSoundGameProps> = ({ item, onSubmit
 
     setIsSubmitting(true)
     const responseTime = Date.now() - startTime
+
+    // Play letter sound as feedback
+    await audioPlayer.playLetterSound(item.content)
 
     const responseData: ResponseData = {
       raw_response: 'parent_graded',
